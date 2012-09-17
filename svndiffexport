@@ -1,0 +1,58 @@
+#!/bin/sh
+# svndiffexport
+#Export only modified files in SVN
+#
+#  Copyright (C) 2012 Sutunam Christophe Denuziere
+#  http://www.sutunam.com
+#  Christophe@sutunam.com
+#
+#  Based on http://www.falconnet.fr/Subversion-export-des-fichiers.html
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  any later version.
+#
+#
+# Define usage
+USAGESVNXPORT="Use svndiffexport [SVN Source path] [Version from witch to start the diff] [Version from witch to end the diff] [target directory]
+Example:
+svndiffexport /homme/user/source/path 22 HEAD /home/user/exportfolder"
+
+# Test parameters
+if [ ! $1 ];then echo "svndiffexport : No source specified.
+echo $USAGESVNXPORT";exit;fi
+if [ ! $2 ];then echo "svndiffexport : No start revision specified.
+echo $USAGESVNXPORT";exit;fi
+if [ ! $3 ];then echo "svndiffexport : No end revision specified.
+echo $USAGESVNXPORT";exit;fi
+if [ ! $4 ];then echo "svndiffexport : No target_directory specified.
+echo $USAGESVNXPORT";exit;fi
+
+# check if the target_directory allready exists
+if [ -d $4 ];then echo "svndiffexport : target_directory '$3' allready exists. Remove it or change target_directory parameter.";exit;fi
+
+echo "Processing : source($1), from revision($2) to revision($3), target_directory($3)"
+
+#Create dir
+mkdir $4
+
+#Make a tar with diff files
+tar -cf $4/export.tar `svn diff -r $2:$3 --summarize $1 | awk '{ print $2 }'`
+
+#Go to temp dir
+cd $4
+
+#Extract the tar then delete it, delete .svn files and create a final tar
+tar -xvf export.tar
+rm export.tar
+find . -name ".svn" -type d -exec rm -rf {} \;
+tar -cf 01-finalexport.tar `ls ./`
+
+echo "
+###################
+#####  DONE  ######
+###################
+
+        Files are in $4/01-finalexport.tar and not tar in $4
+"
